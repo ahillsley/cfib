@@ -5,6 +5,7 @@ from iohub import open_ome_zarr
 import matplotlib.pyplot as plt
 import zarr
 from tqdm import tqdm
+import pandas as pd
 
 
 def create_dataset(
@@ -29,6 +30,8 @@ def create_dataset(
     output_store = zarr.group(
         store=output_zarr, overwrite=True
     )  # will not ammend, will create a new zarr
+    zattrs_dict = {}
+    labels = {}
 
     for pos in tqdm(pos_list):
 
@@ -74,8 +77,15 @@ def create_dataset(
 
             output_store[pos][str(cell_count).zfill(5)] = sc_crop
 
+            labels[cell_count] = f"{pos}/" + str(cell_count).zfill(5)
+
             cell_count += 1
-    output_store.attrs.update(fov_normalization_params)
+
+    zattrs_dict["normalization_params"] = fov_normalization_params
+    zattrs_dict["num_cells"] = cell_count - 1
+    zattrs_dict["labels"] = labels
+
+    output_store.attrs.update(zattrs_dict)
 
     return
 
